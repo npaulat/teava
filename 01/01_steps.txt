@@ -1,0 +1,3 @@
+1. RepeatMask genome.fa file and run through RM_post.sh 
+	- convert to .out file to .bed file
+2. Grep out desired TEs into individual .bed files
