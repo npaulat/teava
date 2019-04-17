@@ -1,0 +1,129 @@
+4. MELT Analysis
+	a. Generate formatted .bam files
+	b. Run Preprocess on .sorted.bam files
+	c. Generate all other required files
+		-TE fasta files, TE bed files reference genome index, TE ZIP files
+  d. Run MELT-Split
+	e. Run MELT-Deletion
+  
+  
+  (4) MELT Analysis (using MELTv2.1.5):
+	(4a) Generate input .bam files:
+	## Must map and coordinate sort all PAIRED reads to reference genome (myoLuc2, in this case)
+	## MELT does not handle unpaired reads well.  So ONLY use the paired reads.
+	## To get the paired-reads only bam file, must filter from the freebayes generated iteration1.merged.RG_dedup.bam files which mapped both paired and unpaired reads of each Myotis species to the myoLuc2 reference genome.
+	## Remove the unpaired reads from the .bam files with the following command:
+	## I ran this interactively because the verison of samtools we have installed did not recognize -@ option to call for multiple processors
+	## RUN TIME: Takes about 1-2 hrs per .bam file 
+	## Using samtoolsv1.9 (module load intel samtools/1.9)
+	
+	samtools view -f 1 -q 20 -b -h -o Aust_paired.bam mAustroriparius.iteration1.merged.RG_dedup.bam 
+	
+	## Check with: samtools view [File] | head
+
+	(4b) Preprocess the .bam files and index them:
+
+	## You must preprocess your bam files and index them
+	## You must give the path to the .fa your reference genome and the matching .fai must be in the same location
+	## First make the indexed bam files-- you can skip this step if you already have them -- using samtools index <yourfile.sorted.bam>
+	## NOTE: Although the --help nor the MELT.md states this, you must have the index (.bai) file of each .bam file (in the same directory as the .bam) in order to get Preprocess to work
+	## If you try to run Preprocess without the index file present in the same directory, you receive the following informative error message: "The file x_paired.sorted.bam does not appear to have an index (.bai/.crai suffix), please check and try running again!"
+	## RUN TIME: About 1 hour for each .bam file (sort), about 10-15 minutes to index
+	
+	LIST="Aust Bran80 Cili Davi Occu Sept_TTU Sept_USDA Thys Veli Vive Yuma"
+	for NAME in $LIST; do samtools sort -o $NAME"_paired.sorted.bam" $NAME"_paired.bam"; samtools index $NAME"_paired.sorted.bam"; done
+	
+	## Then run Preprocess in MELT
+	## MELT Preprocess requires java and bowtie2
+	## Must module load intel/18.0.3.222 java/1.8.0 samtools/1.9 bowtie2/2.3.4
+	
+	module load intel/18.0.3.222 java/1.8.0 samtools/1.9 bowtie2/2.3.4
+	
+	## RUN TIME: About 10-20 minutes per .bam file
+	
+	for i in Aust Cili Sept Thys Veli Vive Occu; do java -Xmx2G -jar /lustre/scratch/npaulat/MELTv2.1.5/MELT.jar Preprocess -bamfile ${i}_paired.sorted.bam -h /lustre/scratch/npaulat/MELTv2.1.5/references/myoLuc2.fa; done
+
+	## MELT requires adding the following line to the bashrc to locate the MELT.jar file:
+	## export MELT_EXEC_SITE=/lustre/scratch/npaulat/MELTv2.1.5/MELT.jar
+
+	(4c) Getting the rest of the required files ready
+	## Need the .fa file for the reference genome you used.
+	## Must also have the matching .fai in the same folder (samtools faidx myoLuc2.fa)
+
+	## Need a genome annotation in BED format.  You can download these from the UCSC genome browser.  I used the ones from Daray's folder, myoLuc_genetrack.bed
+
+	## Before running MELT, you must have each TE consensus sequence (.fa file), and the .bed file of reference insertions of said TE, to make all the needed info files
+	## Final result: Generate a zip folder for each type of TE you want to find in your data
+	## The TEs of interest are based on the TEs with recent accumulation (w/n ~25 MY)
+	### Here's what you need:
+	### 1) A single fasta consensus sequence for the TE (in .fa format).
+		### NOTE: CANNOT have ANY non-ATCG bases in the sequence or any extra lines at the end of the sequence - since there are degenerate bases in most of the TE consensus seqs, I replaced them with random, associated bases, e.g. K >> G or T; M >> A or C; Y >> C or T, etc
+	### 2) Reference insertions in BED format:
+		### A) Take your reference genome and mask it with all known mobile elements in RepeatMasker (as in (01))
+		### B) Then take the resulting .out file and convert it to an .out.bed file in .bed format (as in (01))
+		### C) Grep out the TEs you are interested in and create separate .out.bed files for each element; e.g. grep L1 myoLuc2.fa.out.bed >L1.out.bed
+		
+		LIST="hAT-2N1_ML hAT-2N2_ML nhAT_186_ML nhAT-1_EF nhAT1_ML nhAT114_ML nhAT17_ML nhAT171_ML nhAT2_730_ML nhAT3_ML nhAT34_ML nhAT37_ML nhAT6_ML nhAT68_ML nhAT70_ML SPIN_Ml HeliBat_N1a_ML HeliBat_N1b_ML HeliBat_N1c_ML Helitron_R25_ML Helitron-27_EF Helitron-33_EF Helitron-36_EF Helitron-37_EF Helitron-39B_EF Helitron-52_EF Helitron-54_EF Helitron-63_EF Helitron-8_EF Helitron-9_EF Helitron-3_EF HAL1-1B_ML HAL1-1E_ML L1MAB_ML L1MAB2_ML npiggy_156_ML npiggy165_ML npiggy2_41_ML npiggy259_ML piggyBac2_ML Ves1 Ves12 Ves13 Ves17 Ves20 Ves21 Ves25 Ves27 Ves3 Ves3_ML Ves31 Ves35 Ves38 MARIN1_ML Mariner1_ML Mariner3_Ml nMar.Tc1_311_ML nMar382_Ml nMar91_ML nMariner-1_EF nTc1_135_ML nTc1_27_ML Tc1_94_ML"
+		for NAME in $LIST; do grep $NAME myoLuc2.fa.out.bed > $NAME".out.bed"
+		
+		** All SPIN_NA_x_Ml >> SPIN_Ml; MARIN_ML >> MARIN1_ML
+		
+		### All .bed files must have any calls that are position 0 on a scaffold/chromosome removed, as MELT cannot correctly deal with these, causing the MELT run to stop with an unintelligible java error (these calls would not be high evidence quality anyway, and are very few, so should not account for > 0.001% of all TE calls total)
+		### Command below assumes the output file is going into a different directory, if in same directory, change output name to $NAME"_filtered.out.bed"
+		
+		for NAME in $LIST; do grep -v -w 0 $NAME".out.bed" > /lustre/scratch/npaulat/MELTv2.1.5/references/beds/$NAME".out.bed"; done
+		
+		## Had to grep -v Drot for Ves1 and Ves3, as well as the allTEs_filtered bed files
+		## Had to grep -v Ves1_Drot, Ves10, Ves11, Ves14, Ves15, Ves16, Ves18 from Ves1.out.bed file
+		## Had to grep -v Ves3_Drot, Ves30, Ves32, Ves36, Ves37, Ves39, AND Ves3_ML from Ves3.out.bed file
+		## Removed all listed above ^^ retroactively in DELETION output
+		
+		### D) Combine all filtered TE .bed files into a single .bed to use in MELT-Deletion
+		### Below command assumes that the RM.out.bed or other extra .bed files are not in the directory, if they are use "for NAME in $LIST" command setup
+		
+		cat *.bed > allTEs.bed
+		
+		### Sort the .bed file of RM calls of all TEs of interest
+		### Must have bedtools module loaded (module load bedtools/2.27.1
+		
+		bedtools sort -i allTEs.bed > allTEs_filtered.bed
+		
+	## Build the required ZIP folder:
+	## The "L1" =name of the element and '3'= # errors allowed per 100 bases -- got the value from the MELT documentation = value used for L1 in humans
+	## Batch scripter used to make ZIP files of all TEs at 8, 10, and 15 for max mutation rate
+	## NOTE: BuildTransposonZIP will not accept TE names with ".", "-", or "_" in the name for the ZIP file, only alphanumeric characters [A-Z, a-z, 0-9]; will have to modify TE names to accomodate this limitation (e.g. nMar.Tc1_311_ML at rate 8 >> nMarTc1v311m8
+	## The m8 on the end of the modified TE name = mut max 8; this is added to make sure the zip files of the same TEs at different max mutation rates are used in the correct MELT runs
+	## USAGE: java -Xmx1G -jar MELT.jar BuildTransposonZIP <.fa Sequence of MEI> <.bed Mask of MEI> <Name of Transposon> <error allowed per 100 bases>
+	## RUN TIME: Under 5 minutes
+	
+	java -Xmx1G -jar /lustre/scratch/npaulat/MELTv2.1.5/MELT.jar BuildTransposonZIP /lustre/scratch/npaulat/MELTv2.1.5/references/fastas/nMarTc1_311_ML.fa /lustre/scratch/npaulat/MELTv2.1.5/references/beds/nMar.Tc1_311_ML.out.bed nMarTc1v311m8 8
+
+	(4d) Run MELT-Split
+	## All MELT Split runs done via batch script generation and submission using batch_melt_runs.py to avoid any unintentional differences in running, and to make my life easier with less repetitive typing
+	## Command example to use batch scripter for mut rate 8:
+	python batch_melt_runs.py -l /lustre/scratch/npaulat/MELTv2.1.5/references/te_list.txt -r /lustre/scratch/npaulat/references/myoLuc2.fa -m 8 -np 2 -od /lustre/scratch/npaulat/MELTv2.1.5/MELT/ -q hrothgar
+	
+	## All jobs run using MELTv2.1.5, options may change with newer versions, as the maker has done this between v2.0.2 and v2.1.5
+	## MELT Split has four steps, each run separately: IndivAnalysis, GroupAnalysis, Genotype, MakeVCF
+	## Example below is with HAL1-1B_ML; the final VCF file will be HAL1v1Bm8_final.comp.vcf
+	
+	for i in Aust Bran80 Cili Davi Occu Sept_TTU Sept_USDA Thys Veli Vive Yuma; do java -Xmx6G -jar /lustre/scratch/npaulat/MELTv2.1.5/MELT.jar IndivAnalysis -w /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8 -bamfile /lustre/scratch/npaulat/MELTv2.1.5/references/bams/${i}_paired.sorted.bam -c 14 -h /lustre/scratch/npaulat/MELTv2.1.5/references/myoLuc2.fa -t /lustre/scratch/npaulat/MELTv2.1.5/references/zips/HAL1v1Bm8_MELT.zip -r 150; done
+	
+	java -Xmx6G -jar /lustre/scratch/npaulat/MELTv2.1.5/MELT.jar GroupAnalysis -discoverydir /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8 -h /lustre/scratch/npaulat/MELTv2.1.5/references/myoLuc2.fa -n /lustre/scratch/npaulat/MELTv2.1.5/references/mLuc_genetrack.bed -t /lustre/scratch/npaulat/MELTv2.1.5/references/zips/HAL1v1Bm8_MELT.zip -w /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8 -r 150
+	
+	for i in Aust Bran80 Cili Davi Occu Sept_TTU Sept_USDA Thys Veli Vive Yuma; do java -Xmx6G -jar /lustre/scratch/npaulat/MELTv2.1.5/MELT.jar Genotype -w /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8 -bamfile /lustre/scratch/npaulat/MELTv2.1.5/references/bams/${i}_paired.sorted.bam -h /lustre/scratch/npaulat/MELTv2.1.5/references/myoLuc2.fa -t /lustre/scratch/npaulat/MELTv2.1.5/references/zips/HAL1v1Bm8_MELT.zip -p /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8; done
+	
+	java -Xmx6G -jar /lustre/scratch/npaulat/MELTv2.1.5/MELT.jar MakeVCF -genotypingdir /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8 -h /lustre/scratch/npaulat/MELTv2.1.5/references/myoLuc2.fa -t /lustre/scratch/npaulat/MELTv2.1.5/references/zips/HAL1v1Bm8_MELT.zip -w /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8 -p /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8
+	
+	(4e) Run MELT-Deletion
+	## All MELT Split runs done via batch script generation and submission using batch_melt_runs.py to avoid any unintentional differences in running, and to make my life easier with less repetitive typing
+	## All jobs run using MELTv2.1.5, options may change with newer versions, as the maker has done this between v2.0.2 and v2.1.5
+	## MELT Deletion has two steps, Deletion-Genotype and Deletion-Merge, which run separately
+	
+	for i in Aust Bran80 Cili Davi Occu Sept_TTU Sept_USDA Thys Veli Vive Yuma; do java -Xmx2G -jar /lustre/scratch/npaulat/MELTv2.1.5/MELT.jar Deletion-Genotype -w /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/del -bamfile /lustre/scratch/npaulat/MELTv2.1.5/references/bams/${i}_paired.sorted.bam -bed /lustre/scratch/npaulat/MELTv2.1.5/references/beds/allTEs_filtered.bed -h /lustre/scratch/npaulat/MELTv2.1.5/references/myoLuc2.fa; done
+	
+	## In order to run Deletion-Merge, you need to generate the list of .tsv files (full path) that are output from Deletion-Genotype (v2.0.2 did this internally, but this was removed, probably because it would run into issues if MELT Deletion was not run in its own directory separate from MELT Split output (other .tsv files))
+	
+	readlink -f $WORKDIR/*.tsv > $WORKDIR/del_list.txt
+	
+	java -Xmx2G -jar /lustre/scratch/npaulat/MELTv2.1.5/MELT.jar Deletion-Merge -bed /lustre/scratch/npaulat/MELTv2.1.5/references/beds/allTEs_filtered.bed -mergelist /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/del/del_list.txt -h /lustre/scratch/npaulat/MELTv2.1.5/references/myoLuc2.fa -o /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/del
