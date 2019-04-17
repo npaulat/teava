@@ -1,0 +1,33 @@
+All scripts assume that there are no header lines, and that input files are tab delimited
+
+add_orientation3.py assumes the input MELT call file is position sorted
+
+add_orientation3.py only reads in the first 4 columns of the reformatted MELT Deletion vcf file, and only the first 5 columns of the reference TE bed file (desired TE subset from the RepeatMasker out bed file)
+
+  MELT file: #CHROM, POS, END, SVTYPE
+  
+  RepeatMasker bed file: #CHROM, POS, END, SVTYPE, ORIENTATION
+  
+Output files: MELT calls with close RM call matches (add_melt_orientation.bed), MELT calls without close RM matches (no_match_meltd.bed), and position sorted file of all MELT calls with the associated orientation (="None" if no close match)
+
+
+rm_most_dups_split.py assumes that the raw MELT Split vcf has been reformatted into the following columns:
+  #CHROM, POS, END, ASSESS, SVTYPE, SVLENGTH, ORIENTATION, GENOTYPE (1-12), MODULE
+
+rm_most_dups7.py assumes that the raw MELT Deletion vcf or concatenated MELT vcf has been reformatted into the following columns:
+  #CHROM, POS, END, SVTYPE, SVLENGTH, ORIENTATION, GENOTYPE (1-12), MODULE
+  
+# To get END, simply add SVLENGTH to POS
+
+# Can be .bed or .txt file, as long as the columns are tab delimited
+
+Output files: Complete MELT call file with exact duplicates and ambiguous calls removed (dupless_melthits.bed), complete MELT call file of all duplicate calls, and calls that are ambiguous in terms of position or TE family inconsistency (ambig_melthits.bed):
+  1. Exact duplicates (only TE subfamilies differ within Ves family)
+    - Select best call (max ASSESS score, and/or longest TE length)
+  2. Duplicates (Minor differences in start position, differences in TE length, TE subfamilies differ, genotypes differ)
+    - If <15 bp start difference, all calls within Ves family or all within same TE subfamily, same genotypes, select the best call (choose call by max ASSESS score, then by longest TE length (MELT Split calls), or by call with longest TE length (MELT Deletion or concatenated MELT calls))
+    - If above conditions are not met, exclude all
+  3. Overlapping calls (>15 bp difference in start position, TE subfamilies differ, genotypes differ)
+    - Exclude all
+  4. Nonoverlapping calls within 10 bases of each other (even if true positives, will lead to ambiguous results downstream)
+    - Exclude all
