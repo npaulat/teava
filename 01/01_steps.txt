@@ -1,3 +1,42 @@
 1. RepeatMask genome.fa file and run through RM_post.sh 
 	- convert to .out file to .bed file
 2. Grep out desired TEs into individual .bed files
+
+
+
+## NOTE: if RUN TIME is not explicitly stated, usually runs in under 2 minutes
+
+(1) RepeatMask Reference Genome:
+## Need de novo genome assembly fasta file and TE sequence library
+## Myotis lucifugus genome taken from Genbank, Genbank Accession: GCA_000147115.1
+## RUN TIME: About 8-10 hours (very approx. time; ususally leave to run overnight)
+
+/lustre/work/daray/software/RepeatMasker-4.0.7_new/RepeatMasker -pa 20 -nolow -lib corrected_denovo_bat_library_1-7-2018.fas -xsmall -dir . -a -gff -inv myoLuc2.fa
+
+## Run post-processing script
+## RUN TIME: About 2-3 hours
+
+sh RM_post.sh myoLuc2.fa.align
+
+## To convert to bed file:
+
+cat myoLuc2.fa.out | awk 'BEGIN{OFS="\t"}{if(NR>3) {if($9=="C"){strand="-"}else{strand="+"};print $5,$6-1,$7,$10,".",strand}}' > myoLuc2.fa.out.bed
+
+## Change cat to zcat and .out to .out.gz if done after RM_post.sh finishes running
+## or 
+
+awk 'BEGIN{OFS="\t"}{if(NR>3){if($9=="C"){strand="-"}else{strand="+"};print $5,$6-1,$7,$10,".",strand}}' < myoLucRM.fa.out > myoLucRM.fa.out.bed
+
+(2) Grep out desired TEs from genome.out.bed file to individual TE subfamily .bed files
+## E.g. grep hAT myoLuc2.fa.out.bed > hats.out.bed
+## Needs more than that because of overlapping/non-overlapping naming conventions
+## Remove any hits that start at site 0 on the contig; run MELT with the edited files
+## E.g. grep -v -w 0 allL1s.bed > allL1s_edited.bed
+
+LIST="hAT-2N1_ML hAT-2N2_ML nhAT_186_ML nhAT-1_EF nhAT1_ML nhAT114_ML nhAT17_ML nhAT171_ML nhAT2_730_ML nhAT3_ML nhAT34_ML nhAT37_ML nhAT6_ML nhAT68_ML nhAT70_ML SPIN_Ml HeliBat_N1a_ML HeliBat_N1b_ML HeliBat_N1c_ML Helitron_R25_ML Helitron-27_EF Helitron-33_EF Helitron-36_EF Helitron-37_EF Helitron-39B_EF Helitron-52_EF Helitron-54_EF Helitron-63_EF Helitron-8_EF Helitron-9_EF Helitron-3_EF HAL1-1B_ML HAL1-1E_ML L1MAB_ML L1MAB2_ML npiggy_156_ML npiggy165_ML npiggy2_41_ML npiggy259_ML piggyBac2_ML Ves1 Ves12 Ves13 Ves17 Ves20 Ves21 Ves25 Ves27 Ves3 Ves3_ML Ves31 Ves35 Ves38 MARIN1_ML Mariner1_ML Mariner3_Ml nMar.Tc1_311_ML nMar382_Ml nMar91_ML nMariner-1_EF nTc1_135_ML nTc1_27_ML Tc1_94_ML"
+
+for NAME in $LIST; do grep -v -w 0 $NAME".out.bed" > /lustre/scratch/npaulat/MELTv2.1.5/references/beds/$NAME".out.bed"
+
+## Had to grep -v Drot for Ves1 and Ves3, as well as the allTEs_filtered bed files
+## Had to grep -v Ves1_Drot, Ves10, Ves11, Ves14, Ves15, Ves16, Ves18 from Ves1.out.bed file
+## Had to grep -v Ves3_Drot, Ves30, Ves32, Ves36, Ves37, Ves39, AND Ves3_ML from Ves3.out.bed file
