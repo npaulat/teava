@@ -40,21 +40,11 @@ samtools index mVelifer.iteration1.merged.RG_dedup.bam
 
 /lustre/work/daray/software/freebayes/scripts/freebayes-parallel_mod /lustre/scratch/npaulat/freebayes_2019/myoLuc2.fa.100kbp.regions.txt 36 -f /lustre/scratch/npaulat/freebayes_2019/myoLuc2.fa mVelifer.iteration1.merged.RG_dedup.bam >mVelifer.iteration1.all.raw.vcf 
 
-## NOTE: The steps below are my own additions, from the previous version of this project pipeline where I was trying to make a pseudo-reference genome via 7 iterations of Freebayes (using GATK AlternateConsensusMaker); they should not actually be necessary for producing accurate/more accurate results here, but I am testing two SNP datasets, one made without these extra steps (all.filtered.vcf), one with (all.filtered_aligned_prims.vcf, to see if there is a difference between them in terms of SNP count/frequency
-
-java -Xmx12g -Djava.io.tmpdir=tmp -jar /lustre/work/daray/software/GenomeAnalysisTK-3.8-0-ge9d806836/GenomeAnalysisTK.jar -T LeftAlignAndTrimVariants -R /lustre/scratch/npaulat/freebayes_2019/myoLuc2.fa -V mVelifer.iteration1.all.raw.vcf -o mVelifer.iteration1.all.raw_aligned.vcf 
-
-java -Xmx12g -Djava.io.tmpdir=tmp -jar /lustre/work/daray/software/GenomeAnalysisTK-3.8-0-ge9d806836/GenomeAnalysisTK.jar -T VariantsToAllelicPrimitives -R /lustre/scratch/npaulat/freebayes_2019/myoLuc2.fa -V mVelifer.iteration1.all.raw_aligned.vcf -o mVelifer.iteration1.all.raw_aligned_prims.vcf 
-
-
-
-## Alternate path to first use GATK VariantFiltration to do quality filtering (does not seem to have desired effects)
-
 ## NOTE: This step filters out calls with mean mapping quality (MQM) of aobserved alternate allele less than 30.0, mean mapping quality (MQMR) of observed reference allele less than 30.0, read depth (DP) less than 5 or more than 60. This could alternatively be done with bcftools in the SNP dataset filtering later on (6a)
 
 java -Xmx12g -Djava.io.tmpdir=tmp -jar /lustre/work/daray/software/GenomeAnalysisTK-3.8-0-ge9d806836/GenomeAnalysisTK.jar -T VariantFiltration -R /lustre/scratch/npaulat/freebayes_2019/myoLuc2.fa -V mVelifer.iteration1.all.raw.vcf --filterExpression "MQM < 30.0 || MQMR < 30.0 || DP < 5 || DP > 60" --filterName mqm30-mqmr30-5dp60 -o mVelifer.iteration1.all.filtered.vcf 
 
-## NOTE: The steps below are my own additions, from the previous version of this project pipeline where I was trying to make a pseudo-reference genome via 7 iterations of Freebayes (using GATK AlternateConsensusMaker); they should not actually be necessary for producing accurate/more accurate results here, but I am testing two SNP datasets, one made without these extra steps (all.filtered.vcf), one with (all.filtered_aligned_prims.vcf, to see if there is a difference between them in terms of SNP count/frequency
+## NOTE: The steps below are my own additions, they should not actually be necessary for producing accurate/more accurate results
 
 java -Xmx12g -Djava.io.tmpdir=tmp -jar /lustre/work/daray/software/GenomeAnalysisTK-3.8-0-ge9d806836/GenomeAnalysisTK.jar -T LeftAlignAndTrimVariants -R /lustre/scratch/npaulat/freebayes_2019/myoLuc2.fa -V mVelifer.iteration1.all.filtered.vcf -o mVelifer.iteration1.all.filtered_aligned.vcf 
 
