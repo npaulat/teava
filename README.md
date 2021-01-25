@@ -13,7 +13,7 @@ This workflow is based on 1) TE annotation via RepeatMasker, 2) BWA-mapped Illum
 ## Necessary programs
 * Python v2.7/v3.6.0 (https://www.python.org/)
 * R v3.6? (https://www.r-project.org/)
-* RepeatMasker v4.0.7 (http://repeatmasker.org/)
+* RepeatMasker v4.0.9 (http://repeatmasker.org/)
 * Bedtools2 v2.26.0 (https://bedtools.readthedocs.io/en/latest/)
 * BWA v0.7.17 (http://bio-bwa.sourceforge.net/)
 * Picard toolkit v2.5.0 (http://broadinstitute.github.io/picard/)
