@@ -3,6 +3,13 @@ A pipeline for a local single nucleotide variant (SNV) and indel enrichment anal
 
 This workflow is based on 1) TE annotation via RepeatMasker, 2) BWA-mapped Illumina paired-end reads, 3) polymorphic TE site identification via MELT, and 4) indel and SNV calls via FreeBayes. It uses a combination of Shell scripts, Python, and R.
 
+## General workflow
+1. TE annotation of reference genome with RepeatMasker and selection of desired TEs
+2. BWA read mapping and FreeBayes variant calling
+3. Polymorphic TE identification with MELT
+4. Polymorphic TE quality filtering and reformatting
+5. SNV/Indel quality filtering and enrichment analysis
+
 ## Necessary programs
 * Python v2.7/v3.6.0 (https://www.python.org/)
 * R v3.6? (https://www.r-project.org/)
@@ -18,10 +25,3 @@ This workflow is based on 1) TE annotation via RepeatMasker, 2) BWA-mapped Illum
 * MELT v2.2.0 (https://melt.igs.umaryland.edu/) - requires Java and Bowtie2
 
 NOTE: The program versions listed are those used in the original pipeline, but newer versions should be compatible.
-
-## General workflow
-1. TE annotation of reference genome with RepeatMasker and selection of desired TEs
-2. BWA read mapping and FreeBayes variant calling
-3. Polymorphic TE identification with MELT
-4. Polymorphic TE quality filtering and reformatting
-5. SNV/Indel quality filtering and enrichment analysis
