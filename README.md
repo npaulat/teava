@@ -20,9 +20,8 @@ This workflow is based on 1) TE annotation via RepeatMasker, 2) BWA-mapped Illum
 NOTE: The program versions listed are those used in the original pipeline, but newer versions should be compatible.
 
 ## General workflow
-1. TE annotation of reference genome with RepeatMasker
-2. Selection and formatting of desired TEs
-3. BWA read mapping and FreeBayes variant calling
-4. Polymorphic TE identification with MELT
-5. Polymorphic TE quality filtering and reformatting
-6. SNV/Indel quality filtering and enrichment analysis
+1. TE annotation of reference genome with RepeatMasker and selection of desired TEs
+2. BWA read mapping and FreeBayes variant calling
+3. Polymorphic TE identification with MELT
+4. Polymorphic TE quality filtering and reformatting
+5. SNV/Indel quality filtering and enrichment analysis
