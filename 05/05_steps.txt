@@ -3,18 +3,44 @@
 	b. Format filtered MELT results into basic .bed file
 	c. Automated runs through the SNP analysis R script
   
-  (6) SNP and Indel Analysis
+(6) SNP and Indel Analysis
+
 	(6a) Quality filtering and SNP/indel separation
 	# First, make raw_aligned_prims.vcf using GATK_raw_aligned_prims.sh as template
 	# Copy over all raw_aligned_prims.vcf files to your working directory
+	
 	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Sept_TTU Sept_USDA Thysanodes Velifer Vivesi Yumanensis; do cp /lustre/scratch/npaulat/freebayes_2019/m${i}/m${i}.iteration1.all.raw_aligned_prims.vcf .; done
 	
-	## Use bcftools/1.9 and vcftools/0.1.13 to do quality filtering and separate SNPs and indels into separate files
-		### NOTE: Dr. Manthey specifically used GATK HaplotypeCaller to create gVCF files for each individual, then used these as GATK input to group genotype SNPs and small indels
-		## NOTE: Then he used VCFtools to filter the output SNPs for 1) sites with quality greater/equal to 20 (QUAL), 2) genotypes with quality greater/equal to 20 (GQ), 3) biallelic SNPs (?), 4) minimum depth per individual greater/equal to 5 (?), 5) maximum mean depth per individual less than 20, 6) the site is covered in all individuals (??), 7) only used SNPs on MELT-called scaffolds for comparisons
-		### NOTE: He used vcftools --vcf <input> --max-missing [] --minQ 20 --minGQ 20 --minDP 5 --max-meanDP 20 --min-alleles [] --maxalleles [] --mac []
+	## Use VCFtools to do quality filtering and BCFtools separate SNPs and indels into separate files
 		### NOTE: --max-missing [float] = Exclude sites on the basis of the proportion of missing data (defined to be between 0 and 1, where 0 allows sites that are completely missing and 1 indicates no missing data allowed); --minQ [float] = Includes only sites with Quality value above this threshold; --minGQ [float] = Excludes all genotypes with a quality below the threshold specified. This option requires that the "GQ" FORMAT tag is specified for all sites; --minDP [float] = Includes only genotypes greater than or euqal to the "--minDP" value, this option requires that the "DP" FORMAT tag is specified for all sites; --max-meanDP [float] = Includes only sites with mean depth values (over all included individuals) less than or equal to the "max-meanDP" value. Requires that the "DP" FORMAT tag is included for each site; --min-alleles [integer] --max-alleles [integer] = Include only sites with a number of alleles greater than or equal to the "--min-alleles" value and less than or equal to the "--max-alleles" value. One of these options may be used without the other. For example, to include only bi-allelic sites, one could use: vcftools --vcf file1.vcf --min-alleles 2 --max-alleles 2; --mac [integer] = Includes only sites with Minor Allele Count greater than or equal to the "--mac" value. Allele count is simply the number of times that allele appears over all individuals at that site
 		
+	## vcftools filters are minimum call quality (QUAL) = 20, minimum genotype quality (GQ) = 20, minumum read depth (DP) = 5, maximum mean read depth (max-meanDP) = 65, minimum number of alleles = 2, and separation of SNP and indel calls
+	## bcftools filter is for genotype - removes variants with uncalled genotypes (./.)
+	## bcftools query then generates a file of variant call coordinates and genotypes
+		### CHROM, POS, END, GT, where END refers to the reference allele's END position
+	
+	## To filter for quality SNV calls:
+
+	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Sept_TTU Sept_USDA Thysanodes Velifer Vivesi Yumanensis; do vcftools --vcf m${i}.iteration1.all.raw_aligned_prims.vcf --recode --recode-INFO-all --remove-indels --minQ 20 --minGQ 20 --minDP 5 --max-meanDP 65 --min-alleles 2 --out ${i}_raw_align_prims_snps; bcftools filter -e 'GT="."' ${i}_raw_align_prims_snps.recode.vcf > ${i}_raw_align_prims_snps_filtGT.vcf; bcftools query -f '%CHROM\t%POS\t%END\t[%GT]\n' ${i}_raw_align_prims_snps_filtGT.vcf > ${i}_snps.vcf; done
+	
+	## To filter for quality indel calls:
+	
+	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Sept_TTU Sept_USDA Thysanodes Velifer Vivesi Yumanensis; do vcftools --vcf m${i}.iteration1.all.raw_aligned_prims.vcf --recode --recode-INFO-all --keep-only-indels --minQ 20 --minGQ 20 --minDP 5 --max-meanDP 65 --min-alleles 2 --out ${i}_raw_align_prims_indels; bcftools filter -e 'GT="."' ${i}_raw_align_prims_indels.recode.vcf > ${i}_raw_align_prims_indels_filtGT.vcf; bcftools query -f '%CHROM\t%POS\t%END\t[%GT]\n' ${i}_raw_align_prims_indels_filtGT.vcf > ${i}_indels.vcf; done
+	
+	(6b) Format filtered MELT results into minimal .bed file
+	## Copy CHROM, POS, END columns into .bed file, no headers
+	
+	(6c) Automated barch runs through the SNP analysis R script
+	## Generate appropriate SNP-TE analysis R script for each species (11), per each TE family (7), for SNPs and indels (2), for reference and nonreference insertions (2) = 308 R scripts, 308 job submission scripts
+	
+	## NOTE: Possible additions: TE family autonomous vs non-autonomous, upstream vs downstream
+	
+	for i in NWOW_ref NWOW_nonref species_unique other_hits; do python sort_melt_hits_jan.py -i mut10_cat_final_tosort/mut10_${i}.bed -m 10 -od mut10_cat_final_tosort; done
+	
+	## To get counts of totals per mut-x, wc -l (make sure to exclude header)
+	## To get SPLIT/DEL counts, grep "SPLIT" or "DELETION" file | wc -l		
+	
+	(6d) Calculating average read depth (coverage) for all species (quality check)
 	## To determine average read depth (distribution plot), to get appropriate # for --max-meanDP
 	## 1) Use samtools depth [-a Output all positions (including those with zero depth)]
 	## Output format: Chromosome/scaffold, depth_sample1, depth_sample2 depth_sample3 ...
@@ -23,42 +49,25 @@
 	## 2) Use cut or awk to break up the depth file into single column files for each individual (locations dropped)
 	## RUN TIME: a = 1 min, b = 2 hours, c = several hours per input
 		## a) Make a tab-separated txt file (popmap.txt) of species/individual names and the # corresponding to the order of .bam input used for samtools depth
+		
 		M_austro	1
 		M_brandtii	2
 		M_cilolabrum	3
 		M_davidii	4
 		M_occultus	5
-		M_sept_TTU	6
-		M_sept_USDA	7
-		M_thysanodes	8
-		M_velifer	9
-		M_vivesi	10
-		M_yumanensis	11
+		M_sept		6
+		M_thysanodes	7
+		M_velifer	8
+		M_vivesi	9
+		M_yumanensis	10
+		
 		## b) Use a bash do cut loop to separate into appropriate files
-		while read -r name1 number1; do number2=$((number1 + 2)); cut zosterops_coverage.txt -f $number2 > ${name1}_depth.txt; done < popmap.txt
+		
+		while read -r name1 number1; do number2=$((number1 + 2)); cut myotis_coverage.txt -f $number2 > ${name1}_depth.txt; done < popmap.txt
+		
 	## 3) Make a distribution plot for mean coverage across each individual per position
-		##NOTE: Can do in R, Python, etc. In this case, the script is adapted from Manthey's github jdmanthey/zosterops_genome/04_depth/04_plot_coverage.r
+		## NOTE: Can do in R, Python, etc. In this case, the script is adapted from Dr. Manthey's github jdmanthey/zosterops_genome/04_depth/04_plot_coverage.r
 	## Calculate mean depth per site, plot individual mean depth vs proportion genome 
 	## Script used = plot_coverage.r
 	## Takes about 30-45 min to read and append to output list for each file
-  	
-	## vcftools filters are minimum call quality (QUAL) = 20, minimum genotype quality (GQ) = 20, minumum read depth (DP) = 5, maximum mean read depth (max-meanDP) = 65, minimum number of alleles = 2, and separation of SNP and indel calls
-	## bcftools filter is for genotype - removes variants with uncalled genotypes (./.)
-	## bcftools query then generates a file of variant call coordinates and genotypes
-		### CHROM, POS, END, GT, where END refers to the reference allele's END position
 	
-	## To filter for quality SNP calls:
-
-	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Sept_TTU Sept_USDA Thysanodes Velifer Vivesi Yumanensis; do vcftools --vcf m${i}.iteration1.all.raw_aligned_prims.vcf --recode --recode-INFO-all --remove-indels --minQ 20 --minGQ 20 --minDP 5 --max-meanDP 65 --min-alleles 2 --out ${i}_raw_align_prims_snps; bcftools filter -e 'GT="."' ${i}_raw_align_prims_snps.recode.vcf > ${i}_raw_align_prims_snps_filtGT.vcf; bcftools query -f '%CHROM\t%POS\t%END\t[%GT]\n' ${i}_raw_align_prims_snps_filtGT.vcf > ${i}_snps.vcf; done
-	
-	## To filter for quality indel calls:
-	
-	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Sept_TTU Sept_USDA Thysanodes Velifer Vivesi Yumanensis; do vcftools --vcf m${i}.iteration1.all.raw_aligned_prims.vcf --recode --recode-INFO-all --keep-only-indels --minQ 20 --minGQ 20 --minDP 5 --max-meanDP 65 --min-alleles 2 --out ${i}_raw_align_prims_indels; bcftools filter -e 'GT="."' ${i}_raw_align_prims_indels.recode.vcf > ${i}_raw_align_prims_indels_filtGT.vcf; bcftools query -f '%CHROM\t%POS\t%END\t[%GT]\n' ${i}_raw_align_prims_indels_filtGT.vcf > ${i}_indels.vcf; done
-	
-	(6b) Format filtered MELT results into basic .bed file
-	## Copy CHROM, POS, END columns into .bed file, no headers
-	
-	(6c) Automated runs through the SNP analysis R script
-	## Generate appropriate SNP-TE analysis R script for each species (11), per each TE family (7), for SNPs and indels (2), for reference and nonreference insertions (2) = 308 R scripts, 308 job submission scripts
-	
-	## NOTE: Possible additions: NW vs OW, upstream vs downstream
