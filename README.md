@@ -1,4 +1,4 @@
-# TEAVA - TE-associated Variant Analysis
+# TEAVA - TE-Associated Variant Analysis
 A pipeline for a local single nucleotide variant (SNV) and indel enrichment analysis near polymorphic transposable element (TE) sites.
 
 This workflow is based on 1) TE annotation via RepeatMasker, 2) BWA-mapped Illumina paired-end reads, 3) polymorphic TE site identification via MELT, and 4) indel and SNV calls via FreeBayes. It uses a combination of Shell scripts, Python, and R.
