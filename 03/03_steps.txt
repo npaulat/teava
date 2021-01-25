@@ -3,7 +3,7 @@
 	b. Run Preprocess on .sorted.bam files
 	c. Generate all other required files
 		-TE fasta files, TE bed files reference genome index, TE ZIP files
-  d. Run MELT-Split
+ 	d. Run MELT-Split
 	e. Run MELT-Deletion
   
   
