@@ -1,0 +1,10 @@
+HAL HAL1-1_mMyo HAL1-1A_ML HAL1-1B_ML HAL1-1E_ML
+LINE L1MAB_ML L1MAB2_ML
+SINE Ves Ves1 Ves10 Ves11 Ves12 Ves13 Ves17 Ves2_mMyo Ves20 Ves21 Ves25 Ves27 Ves3 Ves3_ML Ves31 Ves35 Ves37 Ves38 Ves39
+hAT hAT1_ML hAT1_mMyo hAT2_ML hat3_ML SPIN_Ml
+nhAT nhAT_186_ML nhAT17_ML nhAT1a_ML nhAT1b_ML nhAT2_730_ML nhAT2_ML nhAT-3_EF nhAT3_mMyo nhAT34_ML nhAT37_ML nhAT6_ML nhAT70_ML SPIN_NA_1_Et SPIN_NA_10_Ml SPIN_NA_7_Ml SPIN_NA_8_Ml SPIN_NA_9_Ml
+PiggyBac Myotis_piggyBac piggyBac_2a_Mm piggyBac2_ML piggyBac2_Mm piggyBac2b_Mm
+nPiggyBac npiggy_156_ML npiggy1_mMyo npiggy111_ML npiggy165_ML npiggy2_345_ML npiggy2_41_ML npiggy2_mMyo npiggy259_ML npiggy269a_ML npiggy3_Mlyr npiggy4_mMyo
+Mariner MARIN1_ML Mariner1_ML Mariner3_Ml Mariner-84_Hsal Myotis_Tc1_ML Myotis_Tc2_ML Tc1_94_ML Tc2_122_ML
+nMariner Mariner-84a_Hsal nMar382_Ml nMariner-5_EF nMariner-7_EF
+Helitron BAR1_ML HeliBat_N1a_ML HeliBat_N1b_ML HeliBat_N1c_ML HeliBat1 HeliBatN2 Helitron_R25_ML Helitron10_Myo Helitron-12_EF Helitron12_mMyo Helitron13_mMyo Helitron-14_EF Helitron15_mMyo Helitron18_mMyo Helitron-19_EF Helitron19_mMyo Helitron2_mMyo Helitron20_mMyo Helitron22_mMyo Helitron-26_EF Helitron26_mMyo Helitron-27_EF Helitron29_mMyo Helitron3_mMyo Helitron-30_EF Helitron32_mMyo Helitron-33_EF Helitron-38_EF Helitron-4_EF Helitron-43_EF Helitron5_mMyo Helitron-63_EF Helitron7_mMyo Helitron8_mMyo Helitron-9_EF
