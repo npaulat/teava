@@ -1,6 +1,6 @@
-5. Quality filtering and reformatting
+4. Quality filtering and reformatting
 	a. Run Deletion results file through Orientation script; invert Deletion genotypes
-	b.Concatenate all Split results into single file
+	b. Concatenate all Split results into single file
 	c. Run Split result file and Deletion result file through filtering script
 	d. Edit TE names to match between Split and Deletion results
 	e. Reformat and concatenate Split and Deletion results
@@ -8,7 +8,7 @@
 	g. Filter/separate results into NW vs OW polymorphic file, and all others file
   
   
-  (5) Quality filtering and reformatting
+  (4) Quality filtering and reformatting
 	## NOTE: Info of MELT result info columns
 		##INFO=<ID=ASSESS,Number=1,Type=Integer,Description="Provides information on evidence availible to decide insertion site.0 = No overlapping reads at site;1 = Imprecise breakpoint due to greater than expected distance between evidence;2 = discordant pair evidence only -- No split read information;3 = left side TSD evidence only;4 = right side TSD evidence only;5 = TSD decided with split reads, highest possible quality">
 		##INFO=<ID=TSD,Number=1,Type=String,Description="Precise Target Site Duplication for bases, if unknown, value will be NULL">
@@ -31,12 +31,42 @@
 		##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">
 		##FORMAT=<ID=GL,Number=3,Type=Float,Description="Genotype likelihood">
 
-	(5a) Run Deletion results file through Orientation script; invert Deletion genotypes
+	(4a) Concatenate all Split results into single file
+	for i in mut8 mut10 mut15; do cd /lustre/scratch/npaulat/MELTv2.1.5/MELT/${i};
+	ls | grep -V del | cat *.vcf > ${i}_SPLIT_results.vcf; done
+	
+	## or concatenate all Split results into single file (per each mutation rate set)
+	for i in *.vcf; do grep -v "#" ${i} >> mut8_SPLIT_results.bed; done
+	for i in *.vcf; do grep -v "#" ${i} >> mut10_SPLIT_results.bed; done
+	for i in *.vcf; do grep -v "#" ${i} >> mut15_SPLIT_results.bed; done
+	
+	## Remove headers from Deletion results
+	for i in mut8 mut10 mut15; do grep -v "#" ${i}/del/*.vcf > ${i}_DELETION_results.bed; done
+	
+	(4b) Reformat and filter VCF file to remove extraneous columns and information, and reorganize columns
+	## Also performs initial filtering based on:
+		## 1) PASS flag
+		## 2) ASSESS >= 2
+		## 3) exclude any hits with indeterminate (./.) genotypes
+		## 4) exclude any hits < 5kb from scaffold edge (POS)
+	## Script also adds in appropriate genotype column for reference genome (M. myotis), and MODULE column (Split or Deletion)
+	## !!!NOTE: MELT-Deletion genotypes are inverted compared to MELT-Split, so script additionally inverts the genotypes of MELT-Deletion results to be directly comparable to MELT-Split results
+	## This is because from the standpoint of Deletion, we are looking for known insertions therefore the default allele (0) is “insertion present” and the alternate allele (1) is “insertion absent”.  Super confusing and not at all clear from the documentation.
+	## For MELT split 1/1= insertion present, 0/1= heterozygous, 0/0= insertion absent
+	## For MELT deletion 1/1 = insertion absent, 0/1 = heterozygous, 0/0 = insertion present
+	
+	for i in 8 10 15; do python format_MELT.py -i /lustre/scratch/npaulat/MELTv2.1.5/filtering/mut${i}_SPLIT_results.bed -m split -r ${i}; done
+	
+	for i in 8 10 15; do python format_MELT.py -i /lustre/scratch/npaulat/MELTv2.1.5/filtering/mut${i}_DELETION_results.bed -m del -r ${i}; done
+	
+	(4c) Run Deletion results file through orientation script - adds Orientation column, also removes calls without clear RepeatMasker reference call
 	## MELT Deletion results are TE calls based off of the reference genome's known TE sites, via RepeatMasker, and as such (irritatingly) the VCF does not include the orientation of the call (since it is in the input .bed file)
-	## I made a script to tack the orientation back on, but the script also removes any MELT calls that are not close enough to the original RM call to determine which one it is (essentially quality filtering)
-		## The input is 1) MELT Deletion results in .bed format (Chromosome, Position, End, SVTYPE), 2) RepeatMasker .out.bed file of TEs of interest (from step 4c-1D)
-		## To make the Deletion.bed file, open VCF in excel, remove all comment/header lines, insert column[3], fill with =Pos+SVLENGTH, rearrange/cut CHROM, POS, END, SVTYPE columns into text editor, save as .bed file with no headers
-	## The add_orientation script creates a dictionary of the MELT Deletion results in a basic .bed format, the allTEs_filtered.out.bed, and then compares the keys and key values in the dictionaries.
+	## The add_del_orientation.py script adds the orientation of a TE insertion back into the results file
+	## Script also removes any MELT calls that are not close enough to the original RM call to determine which one it is (quality filtering)
+		## The input is 1) MELT Deletion filtered and reformatted results in .bed format from step 4b, 2) RepeatMasker .out.bed file of TEs of interest (from step 1d/3c)
+		## To make the Deletion.bed file, run DELETION.vcf through format_MELT.py in 4b
+	## HOW IT WORKS:
+	## The add_del_orientation.py script creates a dictionary of the MELT Deletion results in a basic .bed format, the allTEs_filtered.out.bed, and then compares the keys and key values in the dictionaries.
 	## If the chromosome/scaffold names match, it checks the TE name (e.g. HAL1-1B_ML)
 	## If the TE names match, it checks if the start positions are within 50 bases of each other
 	## It makes a list of all possible matches within 50 bases of the called start position
@@ -44,46 +74,37 @@
 	## If there are multiple possible matches, it choses the one that has the start position closest to the MELT call (this is an uncommon situation, generally)
 	## If there are no matching calls within 50 bases, the orientation "NONE" is added to the output .bed file
 	## All calls are kept in the main output .bed file, because then the columns can be easily inserted into the main MELT results spreadsheet, and the "NONE" calls filtered out and removed there, instead of trying to figure out which few calls were removed in the script
-	############# Remember to edit scripts so that the output names are dynamic ##########
+
+	for i in mut8 mut10 mut15; do python add_del_orientation2.py -i /lustre/scratch/npaulat/MELTv2.1.5/MELT/filtering/${i}_DEL_filtered_all_hits_orient.bed -r /lustre/scratch/npaulat/MELTv2.1.5/references/beds/mMyo_higher_score_rm_format_sorted.bed -od /lustre/scratch/npaulat/MELTv2.1.5/MELT/filtering/; done
 	
-	for i in mut8 mut10 mut 15; do python add_orientation3.py -i /lustre/scratch/npaulat/MELTv2.1.5/MELT/${i}_DEL_results.bed -r /lustre/scratch/npaulat/MELTv2.1.5/references/beds/allTEs_filtered.out.bed -od /lustre/scratch/npaulat/MELTv2.1.5/MELT/filtering/; done
+	(4d) Secondary reformatting of MELT-Split and MELT-Deletion results
+	## Use cat_myotis_assess_MELT.py to arbitrarily assign flag ASSESS=4 to MELT-Deletion calls, giving them a high MELT quality score that allows comparison to MELT-Split calls during filtering;
+	## Concatenate the reformatted Split and Deletion results and sort by #CHROM and POS;
+	## Also renames MELT-Split SVTYPE to original RepeatMasker TE name, and assigns a TE category (TYPE) column to each call, for filtering
+		## Since MELT-Split limits input names, they differ from the reference (RM) names used in MELT-Deletion
 	
-	(5b)Concatenate all Split results into single file
-	for i in mut8 mut10 mut15; do cd /lustre/scratch/npaulat/MELTv2.1.5/MELT/${i};
-	ls | grep -V del | cat *.vcf > ${i}_SPLIT_results.vcf; done
+	for i in mut8 mut10 mut15; do python cat_assess_MELT.py -s {i}_SPLIT_filtered.bed -del {i}_DEL_filtered.bed -mt myotis_zip_te_names.txt -lib myotis_te_list.txt -tecat te_lib_categories.txt; done
 	
-	(5c) Run Split result file and Deletion result file through filtering script
-	## Must reformat raw .vcf file to remove extra columns
-	## First complete the following manual Excel filters
-		## 1) PASS flag
-		## 2) ASSESS >= 2
-		## 3) exclude any hits with ./. genotypes
-		## 4) exclude any hits < 5kb from scaffold edge (POS)
-		## (add?) 5) exclude any hits with 0 or -1 as the length (MELT couldn't determine)
-	## Then remove all extraneous info/info columns, and add MODULE and mLuci GENOTYPE columns, with final results file being CHROM, POS, END, SVTYPE, SVLENGTH, ORIENTATION, GENOTYPES 1-12 (insert mLuci genotype column, 1/1 for DEL, 0/0 for SPLIT), MODULE (SPLIT or DELETION)
-	## Paste the reformatted Split and Del sheets into a single sheet
-	## Also paste it into another new workbook and save that separately (will save you computing power later to only have one sheet, also needs to be separate for downstream analysis)
-	############# Remember to edit scripts so that the output names are dynamic ###########
+	(4e) Remove duplicate/ambiguous MELT calls from combined MELT results
+	## Using rm_myotis_dups_assess_cat.py
+		### Input format is CHROM, POS, END, ASSESS, SVTYPE, SVLENGTH, ORIENTATION, GENOTYPES 1-11, MODULE
+	## Generally speaking, removes exact duplicates, overlapping or <50 bp apart TE hits (ambiguous), or overlapping calls that are for the same TE type (e.g. Ves SINE hits)
+	## For multiple Ves SINE calls at a given site (start POS within +/- 15 bp), the calls must have the same orientation and genotypes across all species. If yes, then the script will pick the TE call with the highest ASSESS quality (2-5) and/or the longest insertion length. If the TE call cluster does not meet this criteria, all calls in the cluster are excluded as ambiguous calls.
 	
-	for i in mut8 mut10 mut 15; do python rm_most_dups_split.py -i ${i}_SPLIT_results.vcf -d /lustre/scratch/npaulat/MELTv2.1.5/MELT/${i} -od /lustre/scratch/npaulat/MELTv2.1.5/MELT/${i}; done
+	python rm_myotis_dups_assess_cat.py -i /lustre/scratch/npaulat/MELT/analyze_variants/mut10_cat_assess_dups.bed
 	
-	for i in mut8 mut10 mut 15; do python rm_most_dups7.py -i ${i}_DEL_results.vcf -d /lustre/scratch/npaulat/MELTv2.1.5/MELT/ -od /lustre/scratch/npaulat/MELTv2.1.5/MELT/; done
+	(4f) Convert final filtered MELT-Split calls into single base insertions at POS base position.
+	## This is to reflect that non-reference TE insertions will not be present in the reference genome assembly, and so SNV/indels will be examined around the reference position where the TE inserted in non-reference species/individual
+	## Also removes any hits that are < 10kb from the end of a scaffold to limit any effects of misassembly on scaffold edges
 	
-	(5d) Edit TE names to match between Split and Deletion results
-	## Just do this in Excel - copy/paste DEL result names for SPLIT TE names
+	python cat_myotis_split_to_point.py -i mut10_cat_assess_dupsless_melthits.bed -in /lustre/scratch/npaulat/MELT/combined_references/mMyoMyo_m19_AffsNnoesSC.p1.fa.fai
 	
-	(5e) Reformat and concatenate Split and Deletion results
-	## Copy filtered Split and Deletion results into different spreadsheets in a new Excel file
-	## Then remove all extraneous info/info columns, and add MODULE and mLuci GENOTYPE columns, with final results file being CHROM, POS, END, SVTYPE, SVLENGTH, ORIENTATION, GENOTYPES 1-12 (insert mLuci genotype column, 1/1 for DEL, 0/0 for SPLIT), MODULE (SPLIT or DELETION)
-	## Paste the reformatted Split and Del sheets into a single sheet
-	## Also paste it into another new workbook and save that separately (will save you computing power later to only have one sheet, also needs to be separate for downstream analysis)
+	##Rename output file as desired
 	
-	(5f) Run concatenated results file through filtering script
+	cp mut10_cat_assess_final_tosort.bed > mut10_cat_final.bed
 	
-	python rm_most_dups7.py -i MELT_cat_results.bed -d /lustre/scratch/npaulat/MELTv2.1.5/MELT/ -od /lustre/scratch/npaulat/MELTv2.1.5/MELT/
+	(4g) Filter/separate final filtered and reformatted MELT results into desired data subsets
+	## In this case, I made a script that sorted based on species pairs (reference species x another species), call type (reference/non-reference AKA Split/Deletion), and TE type (based on TE category [TYPE])
+	## Script also makes additional subsets (New World vs Old World species comparisons, etc), but these resulted in too few hits for a robust analysis.
 	
-	## Final manual filtering: in Excel, remove all hits that are < 10kb from the end of a scaffold to limit any effects of misassembly on scaffold edges
-	
-	(5g) Filter/separate results into NW vs OW polymorphic file, and all others file
-	## In Excel, filter the results for hits with mDavi = 0/1 or 1/1 with 2+ other species being 0/0; or mDavi = 0/0 and 2+ others being 0/1 or 1/1
-	## Copy paste these into a new file, save as NW_OW_polymorphic_MELT.xlsx
+	python sort_myotis_melt_hits_sp_and_ref2.py -i mut10_cat_final.bed -m 10
