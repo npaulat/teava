@@ -3,4 +3,4 @@
   * b. Estimate TE subfamily age
   * c. Grep out desired TEs into individual .bed files
   
-  Note: See steps_01.txt for details.
+  Note: See 01_steps.txt for details.
