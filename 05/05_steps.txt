@@ -9,19 +9,20 @@
 	# First, make raw_aligned_prims.vcf using GATK_raw_aligned_prims.sh as template
 	# Copy over all raw_aligned_prims.vcf files to your working directory
 	
-	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Sept_TTU Sept_USDA Thysanodes Velifer Vivesi Yumanensis; do cp /lustre/scratch/npaulat/freebayes_2019/m${i}/m${i}.iteration1.all.raw_aligned_prims.vcf .; done
+	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Septentrionalis_TTU Thysanodes Velifer Vivesi Yumanensis; do cp /lustre/scratch/npaulat/freebayes_2019/m${i}/m${i}.iteration1.all.raw_aligned_prims.vcf .; done
 	
 	## Use VCFtools to do quality filtering and BCFtools separate SNPs and indels into separate files
 		### NOTE: --max-missing [float] = Exclude sites on the basis of the proportion of missing data (defined to be between 0 and 1, where 0 allows sites that are completely missing and 1 indicates no missing data allowed); --minQ [float] = Includes only sites with Quality value above this threshold; --minGQ [float] = Excludes all genotypes with a quality below the threshold specified. This option requires that the "GQ" FORMAT tag is specified for all sites; --minDP [float] = Includes only genotypes greater than or euqal to the "--minDP" value, this option requires that the "DP" FORMAT tag is specified for all sites; --max-meanDP [float] = Includes only sites with mean depth values (over all included individuals) less than or equal to the "max-meanDP" value. Requires that the "DP" FORMAT tag is included for each site; --min-alleles [integer] --max-alleles [integer] = Include only sites with a number of alleles greater than or equal to the "--min-alleles" value and less than or equal to the "--max-alleles" value. One of these options may be used without the other. For example, to include only bi-allelic sites, one could use: vcftools --vcf file1.vcf --min-alleles 2 --max-alleles 2; --mac [integer] = Includes only sites with Minor Allele Count greater than or equal to the "--mac" value. Allele count is simply the number of times that allele appears over all individuals at that site
 		
-	## vcftools filters are minimum call quality (QUAL) = 20, minimum genotype quality (GQ) = 20, minumum read depth (DP) = 5, maximum mean read depth (max-meanDP) = 65, minimum number of alleles = 2, and separation of SNP and indel calls
-	## bcftools filter is for genotype - removes variants with uncalled genotypes (./.)
-	## bcftools query then generates a file of variant call coordinates and genotypes
+	## VCFtools filters are minimum call quality (QUAL) = 20, minimum genotype quality (GQ) = 20, minumum read depth (DP) = 5, maximum mean read depth (max-meanDP) = 65, minimum number of alleles = 2, and separation of SNP and indel calls
+	## BCFtools filter is for genotype - removes variants with uncalled genotypes (./.)
+	## BCFtools query then generates a file of variant call coordinates and genotypes
 		### CHROM, POS, END, GT, where END refers to the reference allele's END position
 	
+	## Submit prep_vcfs.sh script as a job, or use the command line to do the following:
 	## To filter for quality SNV calls:
 
-	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Sept_TTU Sept_USDA Thysanodes Velifer Vivesi Yumanensis; do vcftools --vcf m${i}.iteration1.all.raw_aligned_prims.vcf --recode --recode-INFO-all --remove-indels --minQ 20 --minGQ 20 --minDP 5 --max-meanDP 65 --min-alleles 2 --out ${i}_raw_align_prims_snps; bcftools filter -e 'GT="."' ${i}_raw_align_prims_snps.recode.vcf > ${i}_raw_align_prims_snps_filtGT.vcf; bcftools query -f '%CHROM\t%POS\t%END\t[%GT]\n' ${i}_raw_align_prims_snps_filtGT.vcf > ${i}_snps.vcf; done
+	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Septentrionalis_TTU Thysanodes Velifer Vivesi Yumanensis; do vcftools --vcf m${i}.iteration1.all.raw_aligned_prims.vcf --recode --recode-INFO-all --remove-indels --minQ 20 --minGQ 20 --minDP 5 --max-meanDP 65 --min-alleles 2 --out ${i}_raw_align_prims_snps; bcftools filter -e 'GT="."' ${i}_raw_align_prims_snps.recode.vcf > ${i}_raw_align_prims_snps_filtGT.vcf; bcftools query -f '%CHROM\t%POS\t%END\t[%GT]\n' ${i}_raw_align_prims_snps_filtGT.vcf > ${i}_snps.vcf; done
 	
 	## To filter for quality indel calls:
 	
