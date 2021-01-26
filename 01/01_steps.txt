@@ -1,14 +1,14 @@
 1. TE annotation and selection
-	1a. RepeatMask genome.fa file and run through RM_post.sh 
-		- convert to .out file to .bed file
-	1b. Grep out desired TEs into individual .bed files
+	1a. RepeatMask genome FASTA file and convert to .out file to .bed file
+	1b. Estimate TE subfamily ages
+	1c. Grep out desired TEs into individual .bed files
 
 (1) TE annotation and selection
 ## NOTE: if RUN TIME is not explicitly stated, usually runs in under 2 minutes
 
 ## NOTE: These steps were performed for both Myotis myotis and Myotis lucifugus genome assemblies
 
-	(1b) RepeatMask Reference Genome:
+	(1a) RepeatMask Reference Genome:
 	## Need de novo genome assembly fasta file and TE sequence library
 	## Myotis myotis genome taken from Genbank, Genbank Accession: GCA_014108235.1
 	## Myotis lucifugus genome taken from Genbank, Genbank Accession: GCA_000147115.1
@@ -35,13 +35,14 @@
 
 	awk 'BEGIN{OFS="\t"}{if(NR>3){if($9=="C"){strand="-"}else{strand="+"};print $5,$6-1,$7,$10,".",strand}}' < myoLucRM.fa.out > myoLucRM.fa.out.bed
 
+	(1b) Estimate TE subfamily ages
 	## Get counts of all TEs - can do this in Excel or via command line
 	## Estimate TE subfamily ages using TE divergence and neutral mutation rate
 	## This was done with RepeatMasker output filtered through RM2Bed.py, and lists of 8-10 TE subfamilies to plot using TE_landscape_mya_bins.py
 
 	python TE_landscape_mya_bins.py -b mMyo_higher_score_rm.bed -g <Genome size in bp> -t myotis -sf <List of TE subfamilies file>
 
-	(1b) Grep out desired TEs from genome.out.bed file to individual TE superfamily .bed files
+	(1c) Grep out desired TEs from genome.out.bed file to individual TE superfamily .bed files
 	## E.g. grep hAT myoLuc2.fa.out.bed > hats.out.bed
 	## Needs more than that because of overlapping/non-overlapping naming conventions
 	## Remove any hits that start at site 0 on the contig (cause Java runtime error during MELT run); run MELT with the edited files
