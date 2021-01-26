@@ -1,4 +1,4 @@
-4. MELT Analysis
+3. MELT Analysis
 	a. Generate formatted .bam files
 	b. Run Preprocess on .sorted.bam files
 	c. Generate all other required files
@@ -7,8 +7,8 @@
 	e. Run MELT-Deletion
   
   
-  (4) MELT Analysis (using MELTv2.1.5):
-	(4a) Generate input .bam files:
+  (3) MELT Analysis (using MELTv2.1.5):
+	(3a) Generate input .bam files:
 	## Must map and coordinate sort all PAIRED reads to reference genome (myoLuc2, in this case)
 	## MELT does not handle unpaired reads well.  So ONLY use the paired reads.
 	## To get the paired-reads only bam file, must filter from the freebayes generated iteration1.merged.RG_dedup.bam files which mapped both paired and unpaired reads of each Myotis species to the myoLuc2 reference genome.
@@ -21,7 +21,7 @@
 	
 	## Check with: samtools view [File] | head
 
-	(4b) Preprocess the .bam files and index them:
+	(3b) Preprocess the .bam files and index them:
 
 	## You must preprocess your bam files and index them
 	## You must give the path to the .fa your reference genome and the matching .fai must be in the same location
@@ -46,7 +46,7 @@
 	## MELT requires adding the following line to the bashrc to locate the MELT.jar file:
 	## export MELT_EXEC_SITE=/lustre/scratch/npaulat/MELTv2.1.5/MELT.jar
 
-	(4c) Getting the rest of the required files ready
+	(3c) Getting the rest of the required files ready
 	## Need the .fa file for the reference genome you used.
 	## Must also have the matching .fai in the same folder (samtools faidx myoLuc2.fa)
 
@@ -98,7 +98,7 @@
 	
 	java -Xmx1G -jar /lustre/scratch/npaulat/MELTv2.1.5/MELT.jar BuildTransposonZIP /lustre/scratch/npaulat/MELTv2.1.5/references/fastas/nMarTc1_311_ML.fa /lustre/scratch/npaulat/MELTv2.1.5/references/beds/nMar.Tc1_311_ML.out.bed nMarTc1v311m8 8
 
-	(4d) Run MELT-Split
+	(3d) Run MELT-Split
 	## All MELT Split runs done via batch script generation and submission using batch_melt_runs.py to avoid any unintentional differences in running, and to make my life easier with less repetitive typing
 	## Command example to use batch scripter for mut rate 8:
 	python batch_melt_runs.py -l /lustre/scratch/npaulat/MELTv2.1.5/references/te_list.txt -r /lustre/scratch/npaulat/references/myoLuc2.fa -m 8 -np 2 -od /lustre/scratch/npaulat/MELTv2.1.5/MELT/ -q hrothgar
@@ -115,7 +115,7 @@
 	
 	java -Xmx6G -jar /lustre/scratch/npaulat/MELTv2.1.5/MELT.jar MakeVCF -genotypingdir /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8 -h /lustre/scratch/npaulat/MELTv2.1.5/references/myoLuc2.fa -t /lustre/scratch/npaulat/MELTv2.1.5/references/zips/HAL1v1Bm8_MELT.zip -w /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8 -p /lustre/scratch/npaulat/MELTv2.1.5/MELT/mut8/HAL1v1Bm8
 	
-	(4e) Run MELT-Deletion
+	(3e) Run MELT-Deletion
 	## All MELT Split runs done via batch script generation and submission using batch_melt_runs.py to avoid any unintentional differences in running, and to make my life easier with less repetitive typing
 	## All jobs run using MELTv2.1.5, options may change with newer versions, as the maker has done this between v2.0.2 and v2.1.5
 	## MELT Deletion has two steps, Deletion-Genotype and Deletion-Merge, which run separately
