@@ -1,6 +1,6 @@
-3. Freebayes Variant Calling and .bam file generation
+2. Freebayes Variant Calling and .bam file generation
 
-(3) Freebayes Variant Calling and .bam file generation
+(2) Freebayes Variant Calling and .bam file generation
 ## This step maps the Illumina paired-end reads of each query species to the reference genome, in this case Myotis lucifugus (myoLuc2.fa)
 ## The Freebayes pipeline uses BWA-mem, and some GATK tools such as Haplotype caller
 ## Freebayes uses the paired forward, paired reverse, and unpaired reads (3 files)
