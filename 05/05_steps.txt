@@ -1,12 +1,12 @@
-6. SNP and Indel Analysis
+5. SNP and Indel Analysis
 	a. Quality filtering and SNP/indel separation
 	b. Format filtered MELT results into basic .bed file
 	c. Automated runs through the SNP analysis R script
   
-(6) SNP and Indel Analysis
+(5) SNP and Indel Analysis
 
-	(6a) Quality filtering and SNP/indel separation
-	# First, make raw_aligned_prims.vcf using GATK_raw_aligned_prims.sh as template
+	(5a) Quality filtering and SNP/indel separation
+	# First, make {i}.iteration1.all.raw_aligned_prims.vcf from step 02 (Freebayes Variant Calling and .bam generation)
 	# Copy over all raw_aligned_prims.vcf files to your working directory
 	
 	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Septentrionalis_TTU Thysanodes Velifer Vivesi Yumanensis; do cp /lustre/scratch/npaulat/freebayes_2019/m${i}/m${i}.iteration1.all.raw_aligned_prims.vcf .; done
@@ -28,10 +28,10 @@
 	
 	for i in Austroriparius Brandtii Ciliolabrum Davidii Occultus Sept_TTU Sept_USDA Thysanodes Velifer Vivesi Yumanensis; do vcftools --vcf m${i}.iteration1.all.raw_aligned_prims.vcf --recode --recode-INFO-all --keep-only-indels --minQ 20 --minGQ 20 --minDP 5 --max-meanDP 65 --min-alleles 2 --out ${i}_raw_align_prims_indels; bcftools filter -e 'GT="."' ${i}_raw_align_prims_indels.recode.vcf > ${i}_raw_align_prims_indels_filtGT.vcf; bcftools query -f '%CHROM\t%POS\t%END\t[%GT]\n' ${i}_raw_align_prims_indels_filtGT.vcf > ${i}_indels.vcf; done
 	
-	(6b) Format filtered MELT results into minimal .bed file
+	(5b) Format filtered MELT results into minimal .bed file
 	## Copy CHROM, POS, END columns into .bed file, no headers
 	
-	(6c) Automated barch runs through the SNP analysis R script
+	(5c) Automated batch runs through the SNP analysis R script
 	## Generate appropriate SNP-TE analysis R script for each species (11), per each TE family (7), for SNPs and indels (2), for reference and nonreference insertions (2) = 308 R scripts, 308 job submission scripts
 	
 	## NOTE: Possible additions: TE family autonomous vs non-autonomous, upstream vs downstream
@@ -41,12 +41,14 @@
 	## To get counts of totals per mut-x, wc -l (make sure to exclude header)
 	## To get SPLIT/DEL counts, grep "SPLIT" or "DELETION" file | wc -l		
 	
-	(6d) Calculating average read depth (coverage) for all species (quality check)
+	(5d) Calculating average read depth (coverage) for all species (quality check)
 	## To determine average read depth (distribution plot), to get appropriate # for --max-meanDP
 	## 1) Use samtools depth [-a Output all positions (including those with zero depth)]
 	## Output format: Chromosome/scaffold, depth_sample1, depth_sample2 depth_sample3 ...
 	## RUN TIME: ~7 hours
+	
 	samtools depth -a mAustroriparius.iteration1.merged.RG_dedup.bam mBrandtii.iteration1.merged.RG_dedup.bam mCiliolabrum.iteration1.merged.RG_dedup.bam mDavidii.iteration1.merged.RG_dedup.bam mOccultus.iteration1.merged.RG_dedup.bam mSeptentrionalis_TTU.iteration1.merged.RG_dedup.bam mSeptentrionalis_USDA.iteration1.merged.RG_dedup.bam mThysanodes.iteration1.merged.RG_dedup.bam mVelifer.iteration1.merged.RG_dedup.bam mVivesi.iteration1.merged.RG_dedup.bam mYumanensis.iteration1.merged.RG_dedup.bam > /lustre/scratch/npaulat/analyze_variants/myotis_coverage.txt
+	
 	## 2) Use cut or awk to break up the depth file into single column files for each individual (locations dropped)
 	## RUN TIME: a = 1 min, b = 2 hours, c = several hours per input
 		## a) Make a tab-separated txt file (popmap.txt) of species/individual names and the # corresponding to the order of .bam input used for samtools depth
