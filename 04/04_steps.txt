@@ -1,11 +1,11 @@
 4. Quality filtering and reformatting
-	a. Run Deletion results file through Orientation script; invert Deletion genotypes
-	b. Concatenate all Split results into single file
-	c. Run Split result file and Deletion result file through filtering script
-	d. Edit TE names to match between Split and Deletion results
-	e. Reformat and concatenate Split and Deletion results
-	f. Run concatenated results file through filtering script
-	g. Filter/separate results into NW vs OW polymorphic file, and all others file
+	a. Concatenate all Split results into a single file; remove headers from Deletion results
+	b. Reformat and filter VCF file to remove extraneous columns and information, and reorganize columns
+	c. Run Deletion results file through orientation script - adds Orientation column, also removes calls without clear RepeatMasker reference call
+	d. Secondary reformatting of MELT-Split and MELT-Deletion results
+	e. Remove duplicate/ambiguous MELT calls from combined MELT results
+	f. Convert final filtered MELT-Split calls into single base insertions at POS base position.
+	g. Filter/separate final filtered and reformatted MELT results into desired data subsets
   
   
   (4) Quality filtering and reformatting
