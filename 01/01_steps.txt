@@ -12,10 +12,10 @@
 	## Need de novo genome assembly fasta file and TE sequence library
 	## Myotis myotis genome taken from Genbank, Genbank Accession: GCA_014108235.1
 	## Myotis lucifugus genome taken from Genbank, Genbank Accession: GCA_000147115.1
-	## This was performed with RepeatMasker v4.0.7 using SGE-RepeatMasker batching
+	## This was performed with RepeatMasker v4.0.9 using SGE-RepeatMasker batching
 	## RUN TIME: About 8-10 hours (very approx. time; usually leave to run overnight)
 
-	/lustre/work/daray/software/RepeatMasker-4.0.7_new/RepeatMasker -pa 20 -nolow -lib corrected_denovo_bat_library_1-7-2018.fas -xsmall -dir . -a -gff -inv myoLuc2.fa
+	/lustre/work/daray/software/RepeatMasker-4.0.9/RepeatMasker -pa 20 -nolow -lib corrected_denovo_bat_library_1-7-2018.fas -xsmall -dir . -a -gff -inv myoLuc2.fa
 
 	# Once the RepeatMasker run successfully completes, run RM2Bed.py (RepeatMasker utility script)
 	# See RepeatMasker utils Github page (https://github.com/rmhubley/RepeatMasker/blob/master/util/RM2Bed.py)
