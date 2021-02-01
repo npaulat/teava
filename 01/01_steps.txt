@@ -8,7 +8,7 @@
 
 ## NOTE: These steps were performed for both Myotis myotis and Myotis lucifugus genome assemblies
 
-	(1a) RepeatMask Reference Genome:
+	(1a) RepeatMask Reference Genome, filter and convert to BED format:
 	## Need de novo genome assembly fasta file and TE sequence library
 	## Myotis myotis genome taken from Genbank, Genbank Accession: GCA_014108235.1
 	## Myotis lucifugus genome taken from Genbank, Genbank Accession: GCA_000147115.1
@@ -17,23 +17,17 @@
 
 	/lustre/work/daray/software/RepeatMasker-4.0.7_new/RepeatMasker -pa 20 -nolow -lib corrected_denovo_bat_library_1-7-2018.fas -xsmall -dir . -a -gff -inv myoLuc2.fa
 
-	#Used SGE-RepeatMasker - see mLuc_rm.sh, mLuc2.sh
-
-	## Run post-processing script
-	## RUN TIME: About 2-3 hours
-
-	sh RM_post.sh myoLuc2.fa.align
-
-	#Use the select_size file (has only hits => 100 bases)
-
-	## To convert to bed file:
-
-	cat myoLuc2.fa.select_size.out | awk 'BEGIN{OFS="\t"}{if(NR>3) {if($9=="C"){strand="-"}else{strand="+"};print $5,$6-1,$7,$10,".",strand}}' > myoLuc2.fa.select_size.bed
-
-	## Change cat to zcat and .out to .out.gz if done after RM_post.sh finishes running
-	## or 
-
-	awk 'BEGIN{OFS="\t"}{if(NR>3){if($9=="C"){strand="-"}else{strand="+"};print $5,$6-1,$7,$10,".",strand}}' < myoLucRM.fa.out > myoLucRM.fa.out.bed
+	# Once the RepeatMasker run successfully completes, run RM2Bed.py (RepeatMasker utility script)
+	# See RepeatMasker utils Github page (https://github.com/rmhubley/RepeatMasker/blob/master/util/RM2Bed.py)
+	# Use RM2Bed.py to convert RepeatMasker output to BED format, while also
+	# resolves TE hit overlaps by higher RM score, and removes TE hits <100 bp in length
+	
+	python RM2Bed.py mMyo.fa.align.gz -p mMyo_TEs -o higher_score -m 100
+	
+	# can also separate TEs by TE family or class (e.g. DNA transposons, RC transposons, Retrotransposons, Simple Repeats).
+	# You have to run it twice (once family, once class) in order to get the output separated into DNA transposons, RC transposons, LINEs, SINEs, LTRs.
+	
+	python RM2Bed.py mMyo.fa.align.gz -p mMyo_TEs -o higher_score -m 100 -split ['family' | 'class']
 
 	(1b) Estimate TE subfamily ages
 	## Get counts of all TEs - can do this in Excel or via command line
