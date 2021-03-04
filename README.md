@@ -26,4 +26,4 @@ This workflow is based on 1) TE annotation via RepeatMasker, 2) BWA-mapped Illum
 
 NOTE: The program versions listed are those used in the original pipeline, but newer versions should be compatible.
 
-The workflow for MELT runs using simulated TE insertion data is also available in the simulations folder.
+The workflow for MELT runs using simulated TE insertion data is also available in the **simulations** folder.
