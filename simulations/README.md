@@ -10,7 +10,7 @@ Required software:
 * MELT
 * SAMtools
 * Picard toolkit
-* SimSeq
+* SimSeq (https://github.com/jstjohn/SimSeq)
 * BWA
 * BEDtools
 
