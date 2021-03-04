@@ -10,6 +10,8 @@ This workflow is based on 1) TE annotation via RepeatMasker, 2) BWA-mapped Illum
 4. Polymorphic TE quality filtering and reformatting
 5. SNV/Indel quality filtering and enrichment analysis
 
+The workflow for MELT runs using simulated TE insertion data is also available in the **simulations** folder.
+
 ## Necessary programs
 * Python v2.7/v3.6.0 (https://www.python.org/)
 * R v3.6.2 (https://www.r-project.org/)
@@ -26,4 +28,4 @@ This workflow is based on 1) TE annotation via RepeatMasker, 2) BWA-mapped Illum
 
 NOTE: The program versions listed are those used in the original pipeline, but newer versions should be compatible.
 
-The workflow for MELT runs using simulated TE insertion data is also available in the **simulations** folder.
+Please note that these scripts often have hard-coded directory and queue variables, and shell scripts are set up for a UGE cluster.
